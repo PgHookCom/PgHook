@@ -1,24 +1,79 @@
+using PgOutput2Json;
+
 namespace PgHook
 {
     public class Worker : BackgroundService
     {
+        private readonly IConfiguration _cfg;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger<Worker> _logger;
 
-        public Worker(ILogger<Worker> logger)
+        public Worker(IConfiguration cfg, ILoggerFactory loggerFactory, ILogger<Worker> logger)
         {
+            _cfg = cfg;
+            _loggerFactory = loggerFactory;
             _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            var webHookUrl = _cfg.GetValue<string>("PGH_WEBHOOK_URL");
+            if (string.IsNullOrWhiteSpace(webHookUrl))
             {
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                }
-                await Task.Delay(1000, stoppingToken);
+                _logger.LogCritical("PGH_WEBHOOK_URL is not set");
+                return;
             }
+
+            var webHookSecret = _cfg.GetValue<string>("PGH_WEBHOOK_SECRET") ?? "";
+
+            var connString = _cfg.GetValue<string>("PGH_POSTGRES_CONN");
+            if (string.IsNullOrWhiteSpace(connString))
+            {
+                _logger.LogCritical("PGH_POSTGRES_CONN is not set");
+                return;
+            }
+            
+            var publicationNames = _cfg.GetValue<string>("PGH_PUBLICATION_NAMES");
+            if (string.IsNullOrWhiteSpace(publicationNames))
+            {
+                _logger.LogCritical("PGH_PUBLICATION_NAMES is not set");
+                return;
+            }
+            
+            var replicationSlot = _cfg.GetValue<string>("PGH_REPLICATION_SLOT");
+            if (string.IsNullOrWhiteSpace(replicationSlot))
+            {
+                _logger.LogCritical("PGH_REPLICATION_SLOT is not set");
+                return;
+            }
+            
+            var batchSize = _cfg.GetValue<int>("PGH_BATCH_SIZE");
+            if (batchSize < 1)
+            {
+                batchSize = 100;
+            }
+
+            var jsonCompact = _cfg.GetValue<bool>("PGH_JSON_COMPACT");
+
+            var publications = publicationNames.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .ToArray();
+
+            using var pgOutput2Json = PgOutput2JsonBuilder.Create()
+                .WithLoggerFactory(_loggerFactory)
+                .WithPgConnectionString(connString)
+                .WithPgPublications(publicationNames)
+                .WithPgReplicationSlot(replicationSlot, useTemporarySlot: false)
+                .WithBatchSize(batchSize)
+                .WithMessagePublisherFactory(new WebHookPublisherFactory(webHookUrl, webHookSecret))
+                .WithJsonOptions(options =>
+                {
+                    options.WriteTableNames = true;
+                    options.WriteMode = jsonCompact ? JsonWriteMode.Compact : JsonWriteMode.Default;
+                })
+                .Build();
+
+            await pgOutput2Json.StartAsync(stoppingToken);
         }
     }
 }
