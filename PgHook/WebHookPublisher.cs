@@ -6,8 +6,6 @@ namespace PgHook
 {
     internal class WebHookPublisher : IMessagePublisher
     {
-        private static readonly HttpClient _httpClient = new();
-
         private static readonly TimeSpan[] _retryDelays = 
         [ 
             TimeSpan.FromSeconds(2),
@@ -15,6 +13,7 @@ namespace PgHook
             TimeSpan.FromSeconds(8),
         ];
 
+        private readonly HttpClient _httpClient;
         private readonly string _webHookUrl;
 
         // used for creating github-like signature
@@ -22,8 +21,9 @@ namespace PgHook
         private readonly ILogger<WebHookPublisher>? _logger;
         private readonly List<string> _changes;
 
-        public WebHookPublisher(string webHookUrl, string webHookSecret, int batchSize, ILogger<WebHookPublisher>? logger)
+        public WebHookPublisher(HttpClient httpClient, string webHookUrl, string webHookSecret, int batchSize, ILogger<WebHookPublisher>? logger)
         {
+            _httpClient = httpClient;
             _webHookUrl = webHookUrl;
             _webHookSecret = webHookSecret;
             _logger = logger;

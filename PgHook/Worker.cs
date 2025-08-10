@@ -26,6 +26,8 @@ namespace PgHook
 
             var webHookSecret = _cfg.GetValue<string>("PGH_WEBHOOK_SECRET") ?? "";
 
+            var webHookTimeoutSec = _cfg.GetValue<int>("PGH_WEBHOOK_TIMEOUT_SEC");
+
             var connString = _cfg.GetValue<string>("PGH_POSTGRES_CONN");
             if (string.IsNullOrWhiteSpace(connString))
             {
@@ -59,13 +61,20 @@ namespace PgHook
                 .Select(x => x.Trim())
                 .ToArray();
 
+            var httpClient = new HttpClient();
+
+            if (webHookTimeoutSec > 0)
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(webHookTimeoutSec);
+            }
+
             using var pgOutput2Json = PgOutput2JsonBuilder.Create()
                 .WithLoggerFactory(_loggerFactory)
                 .WithPgConnectionString(connString)
                 .WithPgPublications(publicationNames)
                 .WithPgReplicationSlot(replicationSlot, useTemporarySlot: false)
                 .WithBatchSize(batchSize)
-                .WithMessagePublisherFactory(new WebHookPublisherFactory(webHookUrl, webHookSecret))
+                .WithMessagePublisherFactory(new WebHookPublisherFactory(httpClient, webHookUrl, webHookSecret))
                 .WithJsonOptions(options =>
                 {
                     options.WriteTableNames = true;
