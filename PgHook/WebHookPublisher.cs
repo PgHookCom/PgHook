@@ -57,6 +57,7 @@ namespace PgHook
                     using var content = new StringContent(body, Encoding.UTF8, "application/json");
 
                     content.Headers.Add("X-Hub-Signature-256", signature);
+                    content.Headers.Add("X-Timestamp", DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
 
                     var response = await _httpClient.PostAsync(_webHookUrl, content, token);
 
