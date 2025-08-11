@@ -42,13 +42,22 @@ namespace PgHook
                 return;
             }
             
+            var usePermanentSlot = _cfg.GetValue<bool>("PGH_USE_PERMANENT_SLOT");
+
             var replicationSlot = _cfg.GetValue<string>("PGH_REPLICATION_SLOT");
             if (string.IsNullOrWhiteSpace(replicationSlot))
             {
-                _logger.LogCritical("PGH_REPLICATION_SLOT is not set");
-                return;
+                if (usePermanentSlot)
+                {
+                    _logger.LogCritical("PGH_REPLICATION_SLOT is not set");
+                    return;
+                }
+                else
+                {
+                    replicationSlot = $"pghook_{Guid.NewGuid().ToString().Replace("-", "")}";
+                }
             }
-            
+
             var batchSize = _cfg.GetValue<int>("PGH_BATCH_SIZE");
             if (batchSize < 1)
             {
@@ -72,7 +81,7 @@ namespace PgHook
                 .WithLoggerFactory(_loggerFactory)
                 .WithPgConnectionString(connString)
                 .WithPgPublications(publicationNames)
-                .WithPgReplicationSlot(replicationSlot, useTemporarySlot: false)
+                .WithPgReplicationSlot(replicationSlot, useTemporarySlot: !usePermanentSlot)
                 .WithBatchSize(batchSize)
                 .WithMessagePublisherFactory(new WebHookPublisherFactory(httpClient, webHookUrl, webHookSecret))
                 .WithJsonOptions(options =>
