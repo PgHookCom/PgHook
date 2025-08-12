@@ -1,0 +1,116 @@
+# PgHook
+
+PgHook streams PostgreSQL change events (logical replication via **PgOutput2Json**) and delivers them to a **webhook**.
+
+It’s packaged as a Docker image.
+
+---
+
+## Quick start (Docker)
+
+1) Ensure PostgreSQL has a publication for the tables you want to watch:
+```sql
+CREATE PUBLICATION mypub FOR ALL TABLES;
+```
+
+2) Run PgHook with the minimum required environment:
+```bash
+docker run --rm \
+  -e PGH_POSTGRES_CONN="Host=host.docker.internal;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
+  -e PGH_PUBLICATION_NAMES="mypub" \
+  -e PGH_WEBHOOK_URL="https://example.com/webhooks/pghook" \
+  ghcr.io/your-org/pghook:latest
+```
+
+That’s it. As rows change, PgHook will POST events to your webhook.
+
+> Want a stable replication position across restarts?
+> Add a permanent slot: `-e PGH_USE_PERMANENT_SLOT=true -e PGH_REPLICATION_SLOT=myslot`  
+> (if omitted, PgHook generates a temporary slot name).
+
+---
+
+## Webhook payload
+
+Each change is a compact JSON object (from **PgOutput2Json**). Batches are delivered to your webhook (up to `PGH_BATCH_SIZE` items per POST). Each element looks like:
+
+```jsonc
+{
+  "c": "U",             // Change type: I (insert), U (update), D (delete)
+  "w": 2485645760,      // Deduplication key (derived from WAL start)
+  "t": "schema.table",  // Table name
+  "k": { /* key or old values (depends on table/replica identity) */ },
+  "r": { /* new row values; not present for deletes */ }
+}
+```
+
+### Signatures (optional)
+If you set `PGH_WEBHOOK_SECRET`, each request includes:
+- `X-Hub-Signature-256`: HMAC-SHA256 of the request body using your secret
+- `X-Timestamp`: Unix timestamp of when the payload was signed
+
+Use these to verify authenticity and freshness on the receiver.
+
+---
+
+## Configuration
+
+All configuration is via environment variables. Required ones first; everything else is optional.
+
+| Variable | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `PGH_POSTGRES_CONN` | ✅ | string | — | PostgreSQL connection string (Npgsql format). |
+| `PGH_PUBLICATION_NAMES` | ✅ | string | — | Comma-separated publication name(s) to subscribe to. |
+| `PGH_WEBHOOK_URL` | ✅ | string (URL) | — | Webhook endpoint that will receive change batches via HTTP POST. |
+| `PGH_REPLICATION_SLOT` | ◻️ | string | auto-generated when not using permanent slot | Replication slot name. Required if `PGH_USE_PERMANENT_SLOT=true`. |
+| `PGH_USE_PERMANENT_SLOT` | ◻️ | bool | `false` | Use a permanent logical replication slot instead of a temporary one. |
+| `PGH_BATCH_SIZE` | ◻️ | int | `100` | Max number of change events per POST. |
+| `PGH_JSON_COMPACT` | ◻️ | bool | `false` | Emit compact JSON (minified). |
+| `PGH_WEBHOOK_SECRET` | ◻️ | string | `""` | If set, requests are signed (see **Signatures**). |
+| `PGH_WEBHOOK_TIMEOUT_SEC` | ◻️ | int (sec) | `30` | Overall HTTP request timeout. |
+| `PGH_WEBHOOK_CONNECT_TIMEOUT_SEC` | ◻️ | int (sec) | `10` | Connect timeout for the HTTP client. |
+| `PGH_WEBHOOK_KEEPALIVE_DELAY_SEC` | ◻️ | int (sec) | `60` | TCP keep-alive probe delay. |
+| `PGH_WEBHOOK_KEEPALIVE_TIMEOUT_SEC` | ◻️ | int (sec) | `10` | TCP keep-alive probe timeout. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | ◻️ | int (sec) | 600 | Max lifetime for pooled HTTP connections. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | ◻️ | int (sec) | 120 | Idle timeout for pooled HTTP connections. |
+
+> Notes
+> - `PGH_PUBLICATION_NAMES` can list multiple publications separated by commas.
+> - If `PGH_REPLICATION_SLOT` isn’t supplied and `PGH_USE_PERMANENT_SLOT=false`, PgHook uses a generated temporary slot (`pghook_<guid>`).
+
+---
+
+## Failure & retry behavior
+
+- Events are read continuously from the replication stream.  
+- Webhook deliveries use an HTTP client configured with your timeout/keep-alive settings.  
+- Non-success responses (>=400) are logged and retried three times, after 2 seconds, 4 seconds and 8 seconds.
+- If the HTTP request failes after three retries, the replication stops, database connection is closed.
+  After 10 seconds the replication is restarted, and the process starts from the beginning. 
+
+---
+
+## Example: docker-compose
+
+```yaml
+services:
+  pghook:
+    image: ghcr.io/your-org/pghook:latest
+    environment:
+      PGH_POSTGRES_CONN: "Host=db;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook"
+      PGH_PUBLICATION_NAMES: "mypub"
+      PGH_WEBHOOK_URL: "http://receiver/webhooks/pghook"
+      # PGH_USE_PERMANENT_SLOT: "true"
+      # PGH_REPLICATION_SLOT: "myslot"
+      # PGH_BATCH_SIZE: "100"
+      # PGH_JSON_COMPACT: "true"
+    depends_on:
+      - db
+```
+
+---
+
+## License
+
+MIT (or fill in your actual license).
+
