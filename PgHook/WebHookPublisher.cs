@@ -40,10 +40,11 @@ namespace PgHook
 
 
             // Sign the payload
-            string signature;
-
-            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_webHookSecret ?? "")))
+            string? signature = null;
+            if (!string.IsNullOrWhiteSpace(_webHookSecret))
             {
+                using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_webHookSecret ?? ""));
+
                 var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(body));
                 signature = "sha256=" + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }
@@ -56,7 +57,10 @@ namespace PgHook
                 {
                     using var content = new StringContent(body, Encoding.UTF8, "application/json");
 
-                    content.Headers.Add("X-Hub-Signature-256", signature);
+                    if (signature != null)
+                    {
+                        content.Headers.Add("X-Hub-Signature-256", signature);
+                    }
                     content.Headers.Add("X-Timestamp", DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
 
                     var response = await _httpClient.PostAsync(_webHookUrl, content, token);
