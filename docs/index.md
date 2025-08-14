@@ -149,6 +149,39 @@ volumes:
 
 ---
 
+## Testing the example docker-compose.yml
+
+### Follow `test-api` logs
+
+Open a terminal and run:
+
+```bash
+docker-compose logs -f test-api
+```
+
+This will stream HTTP requests received by the test API in real time.
+
+### Quick test with PostgreSQL
+
+In __another__ terminal, execute the following commands (to create table and publication in the `db` container):
+
+```
+# Create a test table
+docker exec -it db psql -U postgres -c "CREATE TABLE test_table (id SERIAL PRIMARY KEY, name TEXT);"
+
+# Create a publication for the table
+docker exec -it db psql -U postgres -c "CREATE PUBLICATION mypub FOR TABLE test_table;"
+
+# Insert a few rows (add more inserts as needed)
+docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Alice');"
+docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Bob');"
+docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Charlie');"
+```
+
+PgHook should pick up these changes and POST them to the `test-api` webhook, which you can see in the logs window.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
