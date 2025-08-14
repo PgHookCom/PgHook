@@ -108,7 +108,7 @@ services:
     depends_on:
       - db
       - test-api
-	
+
   test-api:
     image: pghook/test-api
     container_name: test-api
