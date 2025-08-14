@@ -1,0 +1,5 @@
+theme: jekyll-theme-slate
+title: PgHook
+description: PgHook sends PostgreSQL row changes to webhooks, using logical replication.
+github:
+  repository_url: https://github.com/PgOutput2Json/PgHook
