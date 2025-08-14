@@ -100,13 +100,24 @@ services:
     environment:
       PGH_POSTGRES_CONN: "Host=db;Username=postgres;Password=secret;Database=postgres;ApplicationName=PgHook"
       PGH_PUBLICATION_NAMES: "mypub"
-      PGH_WEBHOOK_URL: "http://receiver/webhooks/pghook"
+      PGH_WEBHOOK_URL: "http://test-api:5000/webhooks"
       # PGH_USE_PERMANENT_SLOT: "true"
       # PGH_REPLICATION_SLOT: "myslot"
       # PGH_BATCH_SIZE: "100"
       # PGH_JSON_COMPACT: "true"
     depends_on:
       - db
+      - test-api
+	
+  test-api:
+    image: pghook/test-api
+    container_name: test-api
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - Logging__LogLevel__Default=Warning
+
   db:
     image: postgres:17-alpine
     container_name: db
@@ -133,7 +144,7 @@ services:
 
 volumes:
   postgres_data:
-    name: pghook_postgres_data
+    name: pghook_postgres_data 
 ```
 
 ---
