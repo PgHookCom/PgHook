@@ -19,7 +19,7 @@ docker run --rm \
   -e PGH_POSTGRES_CONN="Host=host.docker.internal;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
   -e PGH_PUBLICATION_NAMES="mypub" \
   -e PGH_WEBHOOK_URL="https://example.com/webhooks/pghook" \
-  ghcr.io/your-org/pghook:latest
+  pghook/pghook
 ```
 
 That’s it. As rows change, PgHook will POST events to your webhook.
@@ -95,7 +95,7 @@ All configuration is via environment variables. Required ones first; everything 
 ```yaml
 services:
   pghook:
-    image: ghcr.io/your-org/pghook:latest
+    image: pghook/pghook
     environment:
       PGH_POSTGRES_CONN: "Host=db;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook"
       PGH_PUBLICATION_NAMES: "mypub"
