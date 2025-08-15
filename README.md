@@ -86,8 +86,8 @@ All configuration is via environment variables. Required ones first; everything 
 | `PGH_WEBHOOK_CONNECT_TIMEOUT_SEC` | int | `10` | Connect timeout for the HTTP client. |
 | `PGH_WEBHOOK_KEEPALIVE_DELAY_SEC` | int | `60` | TCP keep-alive probe delay. |
 | `PGH_WEBHOOK_KEEPALIVE_TIMEOUT_SEC` | int | `10` | TCP keep-alive probe timeout. |
-| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | int | 600 | Max lifetime for pooled HTTP connections. |
-| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | int | 120 | Idle timeout for pooled HTTP connections. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | int | `600` | Max lifetime for pooled HTTP connections. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | int | `120` | Idle timeout for pooled HTTP connections. |
 
 > Notes
 > - `PGH_PUBLICATION_NAMES` can list multiple publications separated by commas.
