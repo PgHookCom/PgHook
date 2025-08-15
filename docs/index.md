@@ -172,7 +172,8 @@ volumes:
 Open a terminal and run:
 
 ```bash
-docker-compose logs -f test-api
+docker compose up -d              # start everything in background
+docker compose logs -f test-api   # follow logs for the test-api container
 ```
 
 This will stream HTTP requests received by the test API in real time.

@@ -172,7 +172,8 @@ volumes:
 Open a terminal and run:
 
 ```bash
-docker-compose logs -f test-api
+docker compose up -d              # start everything in background
+docker compose logs -f test-api   # follow logs for the test-api container
 ```
 
 This will stream HTTP requests received by the test API in real time.
@@ -191,7 +192,7 @@ docker exec -it db psql -U postgres -c "CREATE PUBLICATION mypub FOR TABLE test_
 # Insert a few rows (add more inserts as needed)
 docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Alice');"
 docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Bob');"
-docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Charlie');"
+docker exec -it db psql -U postgres -c "INSERT INTO test_table (name) VALUES ('Charlie'), ('Angel');"
 ```
 
 PgHook should pick up these changes and POST them to the `test-api` webhook, which you can see in the logs window.
