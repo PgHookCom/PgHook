@@ -8,15 +8,30 @@ Distributed as a small-footprint 23.17 MB container image (AOT-compiled .NET 9, 
 
 ## Quick start (Docker)
 
-1) Ensure PostgreSQL has a publication for the tables you want to watch:
+1) To enable logical replication, add the following setting in your `postgresql.conf`:
+
+```
+wal_level = logical
+
+# If needed increase the number of WAL senders, replication slots.
+# The default is 10 for both.
+max_wal_senders = 10
+max_replication_slots = 10
+```
+
+Other necessary settings usually have appropriate default values for a basic setup.
+
+> **Note:** PostgreSQL must be **restarted** after modifying this setting.
+
+2) Ensure PostgreSQL has a publication for the tables you want to watch:
 ```sql
 CREATE PUBLICATION mypub FOR TABLE table1, table2;
 ```
 
-2) Run PgHook with the minimum required environment:
+3) Run PgHook with the minimum required environment:
 ```bash
 docker run --rm \
-  -e PGH_POSTGRES_CONN="Host=host.docker.internal;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
+  -e PGH_POSTGRES_CONN="Host=mydbserver;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
   -e PGH_PUBLICATION_NAMES="mypub" \
   -e PGH_WEBHOOK_URL="https://example.com/webhooks/pghook" \
   pghook/pghook
