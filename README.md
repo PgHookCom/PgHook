@@ -1,6 +1,6 @@
 # PgHook
 
-PgHook streams PostgreSQL change events (logical replication via **PgOutput2Json**) and delivers them to a **webhook**.
+PgHook streams PostgreSQL change events (logical replication via [PgOutput2Json](https://github.com/PgOutput2Json/PgOutput2Json)) and delivers them to a **webhook**.
 
 Distributed as a small-footprint 23.17 MB container image (AOT-compiled .NET 9, Alpine).
 
@@ -47,7 +47,7 @@ That’s it. As rows change, PgHook will POST events to your webhook.
 
 ## Webhook payload
 
-Each change is a compact JSON object (from **PgOutput2Json**). Batches are delivered to your webhook (up to `PGH_BATCH_SIZE` items per POST). Each element looks like:
+Each change is a compact JSON object (from [PgOutput2Json](https://github.com/PgOutput2Json/PgOutput2Json)). Batches are delivered to your webhook (up to `PGH_BATCH_SIZE` items per POST). Each element looks like:
 
 ```jsonc
 {
@@ -72,22 +72,22 @@ Use these to verify authenticity and freshness on the receiver.
 
 All configuration is via environment variables. Required ones first; everything else is optional.
 
-| Variable | Required | Type | Default | Description |
+| Variable | Type | Default | Description |
 |---|---:|---|---|---|
-| `PGH_POSTGRES_CONN` | ✅ | string | — | PostgreSQL connection string (Npgsql format). |
-| `PGH_PUBLICATION_NAMES` | ✅ | string | — | Comma-separated publication name(s) to subscribe to. |
-| `PGH_WEBHOOK_URL` | ✅ | string (URL) | — | Webhook endpoint that will receive change batches via HTTP POST. |
-| `PGH_REPLICATION_SLOT` | ◻️ | string | auto-generated when not using permanent slot | Replication slot name. Required if `PGH_USE_PERMANENT_SLOT=true`. |
-| `PGH_USE_PERMANENT_SLOT` | ◻️ | bool | `false` | Use a permanent logical replication slot instead of a temporary one. |
-| `PGH_BATCH_SIZE` | ◻️ | int | `100` | Max number of change events per POST. |
-| `PGH_JSON_COMPACT` | ◻️ | bool | `false` | Emit compact JSON (minified). |
-| `PGH_WEBHOOK_SECRET` | ◻️ | string | `""` | If set, requests are signed (see **Signatures**). |
-| `PGH_WEBHOOK_TIMEOUT_SEC` | ◻️ | int (sec) | `30` | Overall HTTP request timeout. |
-| `PGH_WEBHOOK_CONNECT_TIMEOUT_SEC` | ◻️ | int (sec) | `10` | Connect timeout for the HTTP client. |
-| `PGH_WEBHOOK_KEEPALIVE_DELAY_SEC` | ◻️ | int (sec) | `60` | TCP keep-alive probe delay. |
-| `PGH_WEBHOOK_KEEPALIVE_TIMEOUT_SEC` | ◻️ | int (sec) | `10` | TCP keep-alive probe timeout. |
-| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | ◻️ | int (sec) | 600 | Max lifetime for pooled HTTP connections. |
-| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | ◻️ | int (sec) | 120 | Idle timeout for pooled HTTP connections. |
+| `PGH_POSTGRES_CONN` | string | — | PostgreSQL connection string (Npgsql format). |
+| `PGH_PUBLICATION_NAMES` | string | — | Comma-separated publication name(s) to subscribe to. |
+| `PGH_WEBHOOK_URL` | string (URL) | — | Webhook endpoint that will receive change batches via HTTP POST. |
+| `PGH_REPLICATION_SLOT` | string | Auto-generated when not using permanent slot | Replication slot name. Required if `PGH_USE_PERMANENT_SLOT=true`. |
+| `PGH_USE_PERMANENT_SLOT` | bool | `false` | Use a permanent logical replication slot instead of a temporary one. |
+| `PGH_BATCH_SIZE` | int | `100` | Max number of change events per POST. |
+| `PGH_JSON_COMPACT` | bool | `false` | Emit compact JSON (minified). |
+| `PGH_WEBHOOK_SECRET` | string | `""` | If set, requests are signed (see **Signatures**). |
+| `PGH_WEBHOOK_TIMEOUT_SEC` | int (sec) | `30` | Overall HTTP request timeout. |
+| `PGH_WEBHOOK_CONNECT_TIMEOUT_SEC` | int (sec) | `10` | Connect timeout for the HTTP client. |
+| `PGH_WEBHOOK_KEEPALIVE_DELAY_SEC` | int (sec) | `60` | TCP keep-alive probe delay. |
+| `PGH_WEBHOOK_KEEPALIVE_TIMEOUT_SEC` | int (sec) | `10` | TCP keep-alive probe timeout. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | int (sec) | 600 | Max lifetime for pooled HTTP connections. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | int (sec) | 120 | Idle timeout for pooled HTTP connections. |
 
 > Notes
 > - `PGH_PUBLICATION_NAMES` can list multiple publications separated by commas.
