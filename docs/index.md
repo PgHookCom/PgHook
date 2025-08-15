@@ -116,7 +116,8 @@ services:
       - "5000:5000"
     environment:
       - ASPNETCORE_URLS=http://0.0.0.0:5000
-      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft.AspNetCore=Warning
 
   db:
     image: postgres:17-alpine

@@ -14,6 +14,16 @@ services:
       - db
       - test-api
 
+  test-api:
+    image: pghook/test-api
+    container_name: test-api
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft.AspNetCore=Warning
+
   db:
     image: postgres:17-alpine
     container_name: db
@@ -37,15 +47,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  test-api:
-    image: pghook/test-api
-    container_name: test-api
-    ports:
-      - "5000:5000"
-    environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:5000
-      - Logging__LogLevel__Default=Warning
 
 volumes:
   postgres_data:
