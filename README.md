@@ -10,7 +10,7 @@ Distributed as a small-footprint 23.17 MB container image (AOT-compiled .NET 9, 
 
 1) Ensure PostgreSQL has a publication for the tables you want to watch:
 ```sql
-CREATE PUBLICATION mypub FOR ALL TABLES;
+CREATE PUBLICATION mypub FOR TABLE table1, table2;
 ```
 
 2) Run PgHook with the minimum required environment:
