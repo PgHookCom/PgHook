@@ -76,18 +76,18 @@ All configuration is via environment variables. Required ones first; everything 
 |---|---|---|---|
 | `PGH_POSTGRES_CONN` | string | — | PostgreSQL connection string (Npgsql format). |
 | `PGH_PUBLICATION_NAMES` | string | — | Comma-separated publication name(s) to subscribe to. |
-| `PGH_WEBHOOK_URL` | string (URL) | — | Webhook endpoint that will receive change batches via HTTP POST. |
+| `PGH_WEBHOOK_URL` | string | — | Webhook endpoint that will receive change batches via HTTP POST. |
 | `PGH_REPLICATION_SLOT` | string | Auto-generated when not using permanent slot | Replication slot name. Required if `PGH_USE_PERMANENT_SLOT=true`. |
 | `PGH_USE_PERMANENT_SLOT` | bool | `false` | Use a permanent logical replication slot instead of a temporary one. |
 | `PGH_BATCH_SIZE` | int | `100` | Max number of change events per POST. |
 | `PGH_JSON_COMPACT` | bool | `false` | Emit compact JSON (minified). |
 | `PGH_WEBHOOK_SECRET` | string | `""` | If set, requests are signed (see **Signatures**). |
-| `PGH_WEBHOOK_TIMEOUT_SEC` | int (sec) | `30` | Overall HTTP request timeout. |
-| `PGH_WEBHOOK_CONNECT_TIMEOUT_SEC` | int (sec) | `10` | Connect timeout for the HTTP client. |
-| `PGH_WEBHOOK_KEEPALIVE_DELAY_SEC` | int (sec) | `60` | TCP keep-alive probe delay. |
-| `PGH_WEBHOOK_KEEPALIVE_TIMEOUT_SEC` | int (sec) | `10` | TCP keep-alive probe timeout. |
-| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | int (sec) | 600 | Max lifetime for pooled HTTP connections. |
-| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | int (sec) | 120 | Idle timeout for pooled HTTP connections. |
+| `PGH_WEBHOOK_TIMEOUT_SEC` | int | `30` | Overall HTTP request timeout. |
+| `PGH_WEBHOOK_CONNECT_TIMEOUT_SEC` | int | `10` | Connect timeout for the HTTP client. |
+| `PGH_WEBHOOK_KEEPALIVE_DELAY_SEC` | int | `60` | TCP keep-alive probe delay. |
+| `PGH_WEBHOOK_KEEPALIVE_TIMEOUT_SEC` | int | `10` | TCP keep-alive probe timeout. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_LIFETIME_SEC` | int | `600` | Max lifetime for pooled HTTP connections. |
+| `PGH_WEBHOOK_POOLED_CONNECTION_IDLE_TIMEOUT_SEC` | int | `120` | Idle timeout for pooled HTTP connections. |
 
 > Notes
 > - `PGH_PUBLICATION_NAMES` can list multiple publications separated by commas.
