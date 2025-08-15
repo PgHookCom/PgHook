@@ -73,7 +73,7 @@ Use these to verify authenticity and freshness on the receiver.
 All configuration is via environment variables. Required ones first; everything else is optional.
 
 | Variable | Type | Default | Description |
-|---|---:|---|---|---|
+|---|---|---|---|
 | `PGH_POSTGRES_CONN` | string | — | PostgreSQL connection string (Npgsql format). |
 | `PGH_PUBLICATION_NAMES` | string | — | Comma-separated publication name(s) to subscribe to. |
 | `PGH_WEBHOOK_URL` | string (URL) | — | Webhook endpoint that will receive change batches via HTTP POST. |
