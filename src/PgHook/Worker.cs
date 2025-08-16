@@ -68,6 +68,7 @@ namespace PgHook
                 {
                     jsonOptions.WriteTableNames = true;
                     jsonOptions.WriteTimestamps = true;
+                    jsonOptions.TimestampFormat = TimestampFormat.UnixTimeMilliseconds;
                     jsonOptions.WriteMode = useCompactJson ? JsonWriteMode.Compact : JsonWriteMode.Default;
                 })
                 .UseWebhook(webhookUrl, options =>
