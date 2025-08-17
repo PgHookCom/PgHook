@@ -58,6 +58,8 @@ namespace PgHook
 
             var useCompactJson = _cfg.GetValue<bool>("PGH_JSON_COMPACT");
 
+            var useStandardWebhooks = _cfg.GetValue<bool>("PGH_USE_STANDARD_WEBHOOKS");
+
             using var pgOutput2Json = PgOutput2JsonBuilder.Create()
                 .WithLoggerFactory(_loggerFactory)
                 .WithPgConnectionString(connectionString)
@@ -73,7 +75,15 @@ namespace PgHook
                 })
                 .UseWebhook(webhookUrl, options =>
                 {
+                    options.UseStandardWebhooks = useStandardWebhooks;
                     options.WebhookSecret = _cfg.GetValue<string>("PGH_WEBHOOK_SECRET") ?? "";
+
+                    for (var i = 1; i <= 100; i++) {
+                        var additionalKey = _cfg.GetValue<string>($"PGH_WEBHOOK_SECRET_{i}");
+                        if (string.IsNullOrWhiteSpace(additionalKey)) break;
+
+                        options.OldWebhookSecrets.Add(additionalKey);
+                    }
 
                     options.RequestTimeout = GetTimeSpan(_cfg, "PGH_WEBHOOK_TIMEOUT_SEC", 30);
                     options.ConnectTimeout = GetTimeSpan(_cfg, "PGH_WEBHOOK_CONNECT_TIMEOUT_SEC", 10);

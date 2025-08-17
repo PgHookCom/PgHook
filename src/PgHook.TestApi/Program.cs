@@ -23,7 +23,8 @@ namespace PgHook.TestApi
 
             var secret = app.Configuration.GetValue<string>("PGH_WEBHOOK_SECRET") ?? "";
 
-            var webhookVerification = new WebhookVerification(secret, timestampToleranceInSec: 5);
+            var verification = new WebhookVerification(secret);
+            var verificationStd = new WebhookVerificationStd(secret, timestampToleranceInSec: 5);
 
             var webHooks = app.MapGroup("/webhooks");
 
@@ -31,21 +32,34 @@ namespace PgHook.TestApi
             {
                 using var reader = new StreamReader(req.Body);
 
+                foreach (var (key, val) in req.Headers)
+                {
+                    Console.WriteLine($"{key}: {val}");
+                }
+
                 var body = await reader.ReadToEndAsync();
 
-                var msgId = req.Headers["webhook-id"].ToString();
-                var timestamp = req.Headers["webhook-timestamp"].ToString();
-                var signature = req.Headers["webhook-signature"].ToString();
+                if (req.Headers.TryGetValue("webhook-signature", out var value))
+                {
+                    var signature = value.ToString();
+                    var msgId = req.Headers["webhook-id"].ToString();
+                    var timestamp = req.Headers["webhook-timestamp"].ToString();
 
-                if (!string.IsNullOrEmpty(msgId)) Console.WriteLine($"webhook-id: {msgId}");
-                if (!string.IsNullOrEmpty(timestamp)) Console.WriteLine($"webhook-timestamp: {timestamp}");
-                if (!string.IsNullOrEmpty(signature)) Console.WriteLine($"webhook-signature: {signature}");
+                    var verified = verificationStd.Verify(body, msgId, timestamp, signature, out var verificationError);
+                    Console.WriteLine("Verification Std: " + (verified ? "OK" : verificationError));
+                }
 
-                var verified = webhookVerification.Verify(body, msgId, timestamp, signature, out var verificationError);
+                if (req.Headers.TryGetValue("X-Hub-Signature-256", out value))
+                {
+                    var signature = value.ToString();
 
-                Console.WriteLine("Verification: " + (verified ? "OK" : verificationError));
+                    var verified = verification.Verify(body, signature);
+                    Console.WriteLine("Verification: " + (verified ? "OK" : "ERR"));
+                }
 
+                Console.Write("Content: ");
                 Console.WriteLine(body);
+                Console.WriteLine();
 
                 return Results.Ok(body);
             });

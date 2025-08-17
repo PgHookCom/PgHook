@@ -59,12 +59,22 @@ Each change is a compact JSON object (from [PgOutput2Json](https://github.com/Pg
 }
 ```
 
-### Signatures (optional)
-If you set `PGH_WEBHOOK_SECRET`, each request includes:
-- `X-Hub-Signature-256`: HMAC-SHA256 of the request body using your secret
-- `X-Timestamp`: Unix timestamp of when the payload was signed
+### Webhook metadata
 
-Use these to verify authenticity and freshness on the receiver.
+If `PGH_USE_STANDARD_WEBHOOKS` is `false`, which is the default, each request includes:
+- `X-Timestamp`: Unix timestamp of when the payload was signed
+- `X-Hub-Signature-256`: HMAC-SHA256 of the request body using your secret (GitHub style, optional, only sent if `options.WebhookSecret` is set)
+  See: [Validating Webhook Deliveries](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries)
+
+If `PGH_USE_STANDARD_WEBHOOKS` is `true` then each request includes standard headers:
+- `webhook-id`: Id of the message in format FirstDedupKey_LastDedupKey, (eg. `2485645760_2485645760`). 
+  Note that this is not fully standard compliant. It can only be used for idempotency check if the `BatchSize` is 1.
+  Otherwise, deduplication keys from the individual messages should be used.
+- `webhook-timestamp`: Integer unix timestamp (seconds since epoch).
+- `webhook-signature`: The signature of the webhook. See: [Standard Webhooks](https://www.standardwebhooks.com/).
+
+In both cases, the request includes:
+- `User-Agent`: string in this format: `PgHook/ReplicationSlotName`;
 
 ---
 
@@ -81,7 +91,10 @@ All configuration is via environment variables. Required ones first; everything 
 - **`PGH_USE_PERMANENT_SLOT`** *(bool, default: `false`)* - Use a permanent logical replication slot instead of a temporary one.  
 - **`PGH_BATCH_SIZE`** *(int, default: `100`)* - Max number of change events per POST.  
 - **`PGH_JSON_COMPACT`** *(bool, default: `false`)* - Emit compact JSON (minified).  
-- **`PGH_WEBHOOK_SECRET`** *(string, default: empty)* - If set, requests are signed (see **Signatures**).  
+- **`PGH_USE_STANDARD_WEBHOOKS`** *(bool, default: `false`)* - If true, uses standard webhooks headers and signature scheme (see **Webhook metadata**).  
+- **`PGH_WEBHOOK_SECRET`** *(string, default: empty)* - If set, requests are signed (see **Webhook metadata**).  
+- **`PGH_WEBHOOK_SECRET_1`** *(string, default: empty)* - Only used if `PGH_USE_STANDARD_WEBHOOKS` is `true`. If set, additional signatures are added (to allow key rotation).
+  More keys can be added by adding more variables with increasing number suffix, eg: `PGH_WEBHOOK_SECRET_2`, `PGH_WEBHOOK_SECRET_3`...  
 - **`PGH_WEBHOOK_TIMEOUT_SEC`** *(int, default: `30`)* - Overall HTTP request timeout.  
 - **`PGH_WEBHOOK_CONNECT_TIMEOUT_SEC`** *(int, default: `10`)* - Connect timeout for the HTTP client.  
 - **`PGH_WEBHOOK_KEEPALIVE_DELAY_SEC`** *(int, default: `60`)* - TCP keep-alive probe delay.  
