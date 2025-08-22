@@ -2,7 +2,7 @@
 
 PgHook streams PostgreSQL change events (logical replication via [PgOutput2Json](https://github.com/PgOutput2Json/PgOutput2Json)) and delivers them to a **webhook**.
 
-Distributed as a small-footprint 23.17 MB container image (AOT-compiled .NET 9, Alpine).
+Distributed as a small-footprint 33.89 MB container image (13.38 MB compressed, AOT-compiled .NET 9, Alpine).
 
 ---
 
