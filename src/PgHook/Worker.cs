@@ -60,6 +60,8 @@ namespace PgHook
 
             var useStandardWebhooks = _cfg.GetValue<bool>("PGH_USE_STANDARD_WEBHOOKS");
 
+            var execFileArgs = _cfg.GetValue<string>("PGH_EXEC_FILE_ARGS") ?? "";
+
             using var pgOutput2Json = PgOutput2JsonBuilder.Create()
                 .WithLoggerFactory(_loggerFactory)
                 .WithPgConnectionString(connectionString)
@@ -77,6 +79,7 @@ namespace PgHook
                 {
                     options.UseStandardWebhooks = useStandardWebhooks;
                     options.WebhookSecret = _cfg.GetValue<string>("PGH_WEBHOOK_SECRET") ?? "";
+                    options.ExecFileArgs = execFileArgs;
 
                     for (var i = 1; i <= 100; i++) {
                         var additionalKey = _cfg.GetValue<string>($"PGH_WEBHOOK_SECRET_{i}");
