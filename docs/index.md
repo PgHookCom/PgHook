@@ -53,6 +53,18 @@ That’s it. As rows change, PgHook will POST events to your webhook.
 
 ---
 
+## Testing with a local executable file
+
+If a file:// scheme is provided (file:///local/file/path), PgHook will execute the specified file instead of making an HTTP request. The headers and the JSON payload will be written to the process’s standard input, and PgHook will capture standard output and standard error, logging both to the console.
+
+```bash
+docker run --rm \
+  -e PGH_POSTGRES_CONN="Host=mydbserver;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
+  -e PGH_PUBLICATION_NAMES="mypub" \
+  -e PGH_WEBHOOK_URL="file:///bin/cat" \
+  pghook/pghook
+```
+
 ## Webhook payload
 
 Each change is a compact JSON object (from [PgOutput2Json](https://github.com/PgOutput2Json/PgOutput2Json)). Batches are delivered to your webhook (up to `PGH_BATCH_SIZE` items per POST). Each element looks like:
@@ -67,17 +79,7 @@ Each change is a compact JSON object (from [PgOutput2Json](https://github.com/Pg
 }
 ```
 
-## Testing with a local executable file
-
-```bash
-docker run --rm \
-  -e PGH_POSTGRES_CONN="Host=mydbserver;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
-  -e PGH_PUBLICATION_NAMES="mypub" \
-  -e PGH_WEBHOOK_URL="file:///bin/cat" \
-  pghook/pghook
-```
-
-### Webhook metadata
+## Webhook metadata
 
 If `PGH_USE_STANDARD_WEBHOOKS` is `false`, which is the default, each request includes:
 - `X-Timestamp`: Unix timestamp of when the payload was signed
