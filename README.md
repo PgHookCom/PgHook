@@ -40,8 +40,16 @@ docker run --rm \
 That’s it. As rows change, PgHook will POST events to your webhook.
 
 > Want a stable replication position across restarts? Add a permanent slot:  
-> `-e PGH_USE_PERMANENT_SLOT=true -e PGH_REPLICATION_SLOT=myslot`  
-> (if omitted, PgHook generates a temporary slot name).
+> `-e PGH_USE_PERMANENT_SLOT=true \`  
+> `-e PGH_REPLICATION_SLOT=myslot`  
+> 
+> ⚠️ **Important:** Permanent replication slots persist across crashes and know nothing about the state of their consumer(s). 
+> They will prevent removal of required resources when there is no connection using them. 
+> This consumes storage because neither required WAL nor required rows from the system catalogs can be removed by VACUUM as long as they are required by a replication slot. 
+> **In extreme cases, this could cause the database to shut down to prevent transaction ID wraparound.**  
+> 
+> **So, if a slot is no longer required, it should be dropped.** To drop a replication slot, use:  
+> `SELECT * FROM pg_drop_replication_slot('my_slot');`
 
 ---
 
@@ -57,6 +65,16 @@ Each change is a compact JSON object (from [PgOutput2Json](https://github.com/Pg
   "k": { /* key or old values (depends on table/replica identity) */ },
   "r": { /* new row values; not present for deletes */ }
 }
+```
+
+## Testing with a local executable file
+
+```bash
+docker run --rm \
+  -e PGH_POSTGRES_CONN="Host=mydbserver;Username=replicator;Password=secret;Database=mydb;ApplicationName=PgHook" \
+  -e PGH_PUBLICATION_NAMES="mypub" \
+  -e PGH_WEBHOOK_URL="file:///bin/cat" \
+  pghook/pghook
 ```
 
 ### Webhook metadata
@@ -86,7 +104,10 @@ All configuration is via environment variables. Required ones first; everything 
 
 - **`PGH_POSTGRES_CONN`** *(string, required)* - PostgreSQL connection string (Npgsql format).  
 - **`PGH_PUBLICATION_NAMES`** *(string, required)* - Comma-separated publication name(s) to subscribe to.  
-- **`PGH_WEBHOOK_URL`** *(string, required)* - Webhook endpoint that will receive change batches via HTTP POST.  
+- **`PGH_WEBHOOK_URL`** *(string, required)* – Webhook endpoint that receives change batches via HTTP POST. 
+  If a `file://` scheme is provided (`file:///local/file/path`), PgHook will execute the specified file instead of making an HTTP request. 
+  The headers and the JSON payload will be written to the process’s **standard input**, and PgHook will capture **standard output** and **standard error**, logging both to the console.  
+- **`PGH_EXEC_FILE_ARGS`** *(string, default: empty)* – Additional command-line arguments to pass when executing the file specified in `PGH_WEBHOOK_URL`.  
 - **`PGH_REPLICATION_SLOT`** *(string, default: auto-generated unless using permanent slot)* - Replication slot name. Required if `PGH_USE_PERMANENT_SLOT=true`.  
 - **`PGH_USE_PERMANENT_SLOT`** *(bool, default: `false`)* - Use a permanent logical replication slot instead of a temporary one.  
 - **`PGH_BATCH_SIZE`** *(int, default: `100`)* - Max number of change events per POST.  
